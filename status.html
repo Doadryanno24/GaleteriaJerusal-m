@@ -14,7 +14,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f8f8f8;
-      padding-bottom: 80px; /* espaço para navbar */
+      padding-bottom: 80px;
     }
     header {
       background: #b71c1c;
@@ -79,7 +79,6 @@
     .circle.current {
       background: #ff9800;
     }
-
     .navbar {
       position: fixed;
       bottom: 0;
@@ -124,6 +123,28 @@
       box-shadow: 0 0 12px 2px #ffb266;
       transform: scale(1.1);
     }
+    .telefone-form {
+      text-align: center;
+      margin: 50px 20px;
+    }
+    .telefone-form input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 80%;
+      max-width: 300px;
+    }
+    .telefone-form button {
+      margin-top: 12px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #b71c1c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -163,20 +184,28 @@
     const statusSteps = ["Pendente", "preparação", "A caminho", "Entregue"];
 
     function App() {
+      const [telefone, setTelefone] = useState(localStorage.getItem("telefone") || "");
       const [cliente, setCliente] = useState(null);
       const [pedidos, setPedidos] = useState([]);
-      const [loading, setLoading] = useState(true);
+      const [loading, setLoading] = useState(false);
+      const [input, setInput] = useState("");
 
       useEffect(() => {
-        const clientesRef = db.ref("clientes").orderByChild("timestamp").limitToLast(1);
+        if (telefone) {
+          buscarPedidos(telefone);
+        }
+      }, [telefone]);
+
+      function buscarPedidos(telefone) {
+        setLoading(true);
+        const clientesRef = db.ref("clientes").orderByChild("telefone").equalTo(telefone);
         clientesRef.once("value", snapshot => {
           if (snapshot.exists()) {
-            const clientesData = snapshot.val();
-            const clienteKey = Object.keys(clientesData)[0];
-            const clienteAtual = clientesData[clienteKey];
-            setCliente(clienteAtual);
+            const clienteData = snapshot.val();
+            const clienteKey = Object.keys(clienteData)[0];
+            setCliente(clienteData[clienteKey]);
 
-            const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(clienteAtual.telefone);
+            const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(telefone);
             pedidosRef.on("value", snapshotPedidos => {
               if (snapshotPedidos.exists()) {
                 const pedidosData = snapshotPedidos.val();
@@ -191,18 +220,68 @@
             });
           } else {
             setCliente(null);
+            setPedidos([]);
             setLoading(false);
           }
         });
-      }, []);
+      }
+
+      function handleSalvarTelefone() {
+        if (input.length >= 10) {
+          localStorage.setItem("telefone", input);
+          setTelefone(input);
+        } else {
+          alert("Digite um telefone válido com DDD.");
+        }
+      }
+
+      function resetarTelefone() {
+        localStorage.removeItem("telefone");
+        setTelefone("");
+        setCliente(null);
+        setPedidos([]);
+      }
+
+      if (!telefone) {
+        return (
+          <div className="telefone-form">
+            <h2>Digite seu telefone com DDD</h2>
+            <input
+              type="tel"
+              placeholder="Ex: 11999998888"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+            />
+            <br />
+            <button onClick={handleSalvarTelefone}>Ver meus pedidos</button>
+          </div>
+        );
+      }
 
       if (loading) return <header>🔄 Carregando pedidos...</header>;
-      if (!cliente) return <header>❌ Nenhum cliente encontrado.</header>;
-      if (pedidos.length === 0) return <header>📭 Nenhum pedido feito por {cliente.nome} ainda.</header>;
+      if (!cliente) return (
+        <div>
+          <header>❌ Nenhum cliente encontrado para {telefone}.</header>
+          <div style={{ textAlign: 'center', marginTop: '10px' }}>
+            <button onClick={resetarTelefone}>Trocar telefone</button>
+          </div>
+        </div>
+      );
+      if (pedidos.length === 0) return (
+        <div>
+          <header>📭 Nenhum pedido feito por {cliente.nome} ainda.</header>
+          <div style={{ textAlign: 'center', marginTop: '10px' }}>
+            <button onClick={resetarTelefone}>Trocar telefone</button>
+          </div>
+        </div>
+      );
 
       return (
         <div>
           <header>🍗 Pedidos de {cliente.nome}</header>
+          <div style={{ textAlign: 'center', marginTop: '-10px' }}>
+            <button onClick={resetarTelefone}>Trocar telefone</button>
+          </div>
           {pedidos.map((pedido, index) => {
             const currentStep = statusSteps.indexOf(pedido.status || "Pendente");
             const progresso = ((currentStep + 1) / statusSteps.length) * 100;
@@ -228,15 +307,13 @@
                 <div className="steps">
                   {statusSteps.map((status, i) => (
                     <div className="step" key={i}>
-                      <div
-                        className={`circle ${
-                          i < currentStep || (i === currentStep && status === "Entregue")
-                            ? "completed"
-                            : i === currentStep
-                            ? "current"
-                            : ""
-                        }`}
-                      ></div>
+                      <div className={`circle ${
+                        i < currentStep || (i === currentStep && status === "Entregue")
+                          ? "completed"
+                          : i === currentStep
+                          ? "current"
+                          : ""
+                      }`}></div>
                       <div>{status}</div>
                     </div>
                   ))}
@@ -251,4 +328,4 @@
     ReactDOM.render(<App />, document.getElementById("root"));
   </script>
 </body>
-  </html>
+</html>
