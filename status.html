@@ -17,7 +17,7 @@
       padding-bottom: 80px;
     }
     header {
-      background: #b71c1c;
+      background: #ff6600;
       color: white;
       padding: 20px;
       font-size: 22px;
@@ -150,16 +150,16 @@
 <body>
   <div id="root"></div>
 
-  <nav class="navbar" role="navigation" aria-label="Navegação principal">
-    <a href="home.html" aria-label="Fazer Pedido">
+  <nav class="navbar">
+    <a href="home.html">
       <svg viewBox="0 0 24 24"><path d="M12 2L4 7v6c0 4 4 6 8 6s8-2 8-6V7l-8-5zM12 12a2 2 0 110-4 2 2 0 010 4z"/></svg>
       Fazer Pedido
     </a>
-    <a href="status.html" class="active" aria-label="Acompanhar Pedido">
+    <a href="status.html" class="active">
       <svg viewBox="0 0 24 24"><path d="M12 8v5l4 2 1-1.73-3.2-1.6V8zM12 2a10 10 0 1010 10A10 10 0 0012 2z"/></svg>
       Acompanhar
     </a>
-    <a href="perfil.html" aria-label="Perfil">
+    <a href="perfil.html">
       <svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
       Perfil
     </a>
@@ -235,13 +235,6 @@
         }
       }
 
-      function resetarTelefone() {
-        localStorage.removeItem("telefone");
-        setTelefone("");
-        setCliente(null);
-        setPedidos([]);
-      }
-
       if (!telefone) {
         return (
           <div className="telefone-form">
@@ -259,29 +252,12 @@
       }
 
       if (loading) return <header>🔄 Carregando pedidos...</header>;
-      if (!cliente) return (
-        <div>
-          <header>❌ Nenhum cliente encontrado para {telefone}.</header>
-          <div style={{ textAlign: 'center', marginTop: '10px' }}>
-            <button onClick={resetarTelefone}>Trocar telefone</button>
-          </div>
-        </div>
-      );
-      if (pedidos.length === 0) return (
-        <div>
-          <header>📭 Nenhum pedido feito por {cliente.nome} ainda.</header>
-          <div style={{ textAlign: 'center', marginTop: '10px' }}>
-            <button onClick={resetarTelefone}>Trocar telefone</button>
-          </div>
-        </div>
-      );
+      if (!cliente) return <header>❌ Nenhum cliente encontrado para {telefone}.</header>;
+      if (pedidos.length === 0) return <header>📭 Nenhum pedido feito por {telefone} ainda.</header>;
 
       return (
         <div>
           <header>🍗 Pedidos de {cliente.nome}</header>
-          <div style={{ textAlign: 'center', marginTop: '-10px' }}>
-            <button onClick={resetarTelefone}>Trocar telefone</button>
-          </div>
           {pedidos.map((pedido, index) => {
             const currentStep = statusSteps.indexOf(pedido.status || "Pendente");
             const progresso = ((currentStep + 1) / statusSteps.length) * 100;
