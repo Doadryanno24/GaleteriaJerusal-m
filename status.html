@@ -9,10 +9,11 @@
   <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: Inter, Arial, sans-serif;
       background: #f8f8f8;
       padding-bottom: 80px;
     }
@@ -30,6 +31,7 @@
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Transição para as bordas */
     }
     .pedido-box h3 {
       margin-top: 0;
@@ -145,6 +147,39 @@
       border-radius: 8px;
       cursor: pointer;
     }
+    /* Estilo para notificação */
+    .notification-banner {
+        background-color: #4CAF50; /* Verde */
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 1001;
+        animation: fadeInDown 0.5s ease-out;
+    }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Estilo para realçar pedido "A caminho" */
+    .pedido-a-caminho {
+        border: 3px solid #ff9800; /* Laranja para destacar */
+        box-shadow: 0 6px 12px rgba(255, 152, 0, 0.3);
+    }
+
+    /* NOVO: Estilo para realçar pedido "Entregue" */
+    .pedido-entregue {
+        border: 3px solid #4CAF50; /* Verde para entregue */
+        box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -166,14 +201,14 @@
   </nav>
 
   <script type="text/babel">
-    const { useEffect, useState } = React;
+    const { useEffect, useState, useRef } = React;
 
     const firebaseConfig = {
       apiKey: "AIzaSyAhFm-UjZbk7bnONOJTKFlh6d4nkoQ9gZg",
       authDomain: "futebol-ao-vivo-ebfd8.firebaseapp.com",
       databaseURL: "https://futebol-ao-vivo-ebfd8-default-rtdb.firebaseio.com",
       projectId: "futebol-ao-vivo-ebfd8",
-      storageBucket: "futebol-ao-vivo-ebfd8.appspot.com",
+      storageBucket: "futebol-ao-vivo-ebfd8.appPot.com",
       messagingSenderId: "946577518523",
       appId: "1:946577518523:web:c82505eef0328ddabade9e"
     };
@@ -189,6 +224,9 @@
       const [pedidos, setPedidos] = useState([]);
       const [loading, setLoading] = useState(false);
       const [input, setInput] = useState("");
+      const [showNotification, setShowNotification] = useState(false); 
+
+      const notifiedOrders = useRef(new Set()); 
 
       useEffect(() => {
         if (telefone) {
@@ -207,23 +245,39 @@
 
             const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(telefone);
             pedidosRef.on("value", snapshotPedidos => {
-              if (snapshotPedidos.exists()) {
-                const pedidosData = snapshotPedidos.val();
-                const pedidosArray = Object.entries(pedidosData)
-                  .map(([id, val]) => ({ id, ...val }))
-                  .sort((a, b) => b.timestamp - a.timestamp);
-                setPedidos(pedidosArray);
-              } else {
-                setPedidos([]);
-              }
-              setLoading(false);
+                if (snapshotPedidos.exists()) {
+                    const pedidosData = snapshotPedidos.val();
+                    const pedidosArray = Object.entries(pedidosData)
+                        .map(([id, val]) => ({ id, ...val }))
+                        .sort((a, b) => b.timestamp - a.timestamp);
+
+                    pedidosArray.forEach(pedido => {
+                        if (pedido.status === "A caminho" && !notifiedOrders.current.has(pedido.id)) {
+                            setShowNotification(true);
+                            playNotificationSound();
+                            notifiedOrders.current.add(pedido.id); 
+                            setTimeout(() => setShowNotification(false), 5000); 
+                        }
+                    });
+
+                    setPedidos(pedidosArray);
+                } else {
+                    setPedidos([]);
+                }
+                setLoading(false);
             });
-          } else {
+          }
+           else {
             setCliente(null);
             setPedidos([]);
             setLoading(false);
           }
         });
+      }
+
+      function playNotificationSound() {
+        const audio = new Audio('https://www.soundjay.com/buttons/beep-07.mp3'); 
+        audio.play().catch(e => console.error("Erro ao reproduzir som:", e));
       }
 
       function handleSalvarTelefone() {
@@ -257,15 +311,31 @@
 
       return (
         <div>
+          {showNotification && (
+            <div className="notification-banner">
+              🎉 Seu pedido está a caminho! 🎉
+            </div>
+          )}
           <header>🍗 Pedidos de {cliente.nome}</header>
           {pedidos.map((pedido, index) => {
             const currentStep = statusSteps.indexOf(pedido.status || "Pendente");
             const progresso = ((currentStep + 1) / statusSteps.length) * 100;
             const total = pedido.itens?.reduce((acc, item) => acc + (item.preco * item.quantidade), 0) || 0;
 
+            let borderColorClass = "";
+            if (pedido.status === "A caminho") {
+              borderColorClass = "pedido-a-caminho";
+            } else if (pedido.status === "Entregue") {
+              borderColorClass = "pedido-entregue";
+            }
+
             return (
-              <div className="pedido-box" key={pedido.id}>
-                <h3>Pedido #{index + 1}</h3>
+              <div
+                className={`pedido-box ${borderColorClass}`}
+                key={pedido.id}
+              >
+                <h3>Pedido #{pedidos.length - index}</h3>
+                <p><strong>Status:</strong> {pedido.status || "Pendente"}</p>
                 <p><strong>Data:</strong> {pedido.horario || "-"}</p>
                 <ul>
                   {pedido.itens?.map((item, i) => (
