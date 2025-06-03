@@ -1,103 +1,85 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Pedido do Cliente</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-  <!-- React -->
-  <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pedidos do Cliente - Galeteria Jerusalém</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      background: #fffbea;
-      padding: 16px;
-      max-width: 600px;
-      margin: auto;
-      padding-bottom: 100px;
+      background: #f8f8f8;
+      padding-bottom: 80px; /* espaço para navbar */
     }
     header {
-      background: #ff6600;
+      background: #b71c1c;
       color: white;
-      padding: 16px;
-      text-align: center;
-      border-radius: 12px;
+      padding: 20px;
       font-size: 22px;
-      margin-bottom: 20px;
+      font-weight: bold;
+      text-align: center;
     }
     .pedido-box {
       background: white;
-      padding: 16px;
-      border-radius: 16px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+      margin: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .pedido-box h3 {
+      margin-top: 0;
+    }
+    .pedido-box ul {
+      padding-left: 20px;
+    }
+    .pedido-box li {
+      margin-bottom: 5px;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 10px;
     }
     .progress {
-      position: relative;
-      height: 6px;
-      background: #ccc;
-      margin: 40px 0 20px;
-      border-radius: 3px;
+      background: #ddd;
+      border-radius: 8px;
+      height: 12px;
+      margin: 15px 0;
       overflow: hidden;
     }
     .progress-fill {
-      position: absolute;
-      height: 6px;
+      height: 100%;
       background: #4caf50;
-      transition: width 0.3s ease;
-      border-radius: 3px;
-      top: 0; left: 0;
-      z-index: 1;
+      transition: width 0.3s ease-in-out;
     }
     .steps {
       display: flex;
       justify-content: space-between;
-      position: relative;
-      top: -14px;
-      z-index: 2;
+      margin-top: 10px;
     }
     .step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex: 1;
       text-align: center;
       font-size: 12px;
-      padding: 0 4px;
+      width: 25%;
     }
     .circle {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
+      margin: 0 auto 4px;
       border-radius: 50%;
       background: #ccc;
-      margin-bottom: 6px;
-      border: 3px solid transparent;
-      box-sizing: border-box;
-      position: relative;
-      top: 10px;
-      z-index: 3;
     }
     .circle.completed {
       background: #4caf50;
-      border-color: #388e3c;
     }
     .circle.current {
-      background: #ff6600;
-      border-color: #e65100;
+      background: #ff9800;
     }
-    .total {
-      font-size: 18px;
-      margin-top: 20px;
-      font-weight: bold;
-      color: #333;
-    }
+
     .navbar {
       position: fixed;
       bottom: 0;
@@ -113,7 +95,6 @@
       border-top-left-radius: 24px;
       border-top-right-radius: 24px;
       z-index: 1000;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     .navbar a {
       color: white;
@@ -126,7 +107,7 @@
       flex-direction: column;
       align-items: center;
       width: 90px;
-      transition: background-color 0.25s ease, transform 0.2s ease;
+      transition: background-color 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
     .navbar a svg {
       margin-bottom: 4px;
@@ -144,39 +125,21 @@
       transform: scale(1.1);
     }
   </style>
-   <link rel="manifest" href="manifest.json" />
-<link rel="apple-touch-icon" href="logo-galeteria.png">
-<meta name="theme-color" content="#FFE6CEAD" />
-</head>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(() => console.log("Service Worker registrado"))
-      .catch(err => console.log("Erro no Service Worker", err));
-  }
-</script>
 </head>
 <body>
   <div id="root"></div>
 
-  <!-- Navbar Estilizada -->
   <nav class="navbar" role="navigation" aria-label="Navegação principal">
     <a href="home.html" aria-label="Fazer Pedido">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 2L4 7v6c0 4 4 6 8 6s8-2 8-6V7l-8-5zM12 12a2 2 0 110-4 2 2 0 010 4z"/>
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 7v6c0 4 4 6 8 6s8-2 8-6V7l-8-5zM12 12a2 2 0 110-4 2 2 0 010 4z"/></svg>
       Fazer Pedido
     </a>
     <a href="status.html" class="active" aria-label="Acompanhar Pedido">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 8v5l4 2 1-1.73-3.2-1.6V8zM12 2a10 10 0 1010 10A10 10 0 0012 2z"/>
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M12 8v5l4 2 1-1.73-3.2-1.6V8zM12 2a10 10 0 1010 10A10 10 0 0012 2z"/></svg>
       Acompanhar
     </a>
     <a href="perfil.html" aria-label="Perfil">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/>
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
       Perfil
     </a>
   </nav>
@@ -200,31 +163,32 @@
     const statusSteps = ["Pendente", "preparação", "A caminho", "Entregue"];
 
     function App() {
-      const [pedido, setPedido] = useState(null);
-      const [loading, setLoading] = useState(true);
       const [cliente, setCliente] = useState(null);
+      const [pedidos, setPedidos] = useState([]);
+      const [loading, setLoading] = useState(true);
 
       useEffect(() => {
         const clientesRef = db.ref("clientes").orderByChild("timestamp").limitToLast(1);
         clientesRef.once("value", snapshot => {
-          if(snapshot.exists()){
+          if (snapshot.exists()) {
             const clientesData = snapshot.val();
             const clienteKey = Object.keys(clientesData)[0];
             const clienteAtual = clientesData[clienteKey];
             setCliente(clienteAtual);
 
             const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(clienteAtual.telefone);
-            pedidosRef.once("value", snapshotPedidos => {
-              if(snapshotPedidos.exists()){
+            pedidosRef.on("value", snapshotPedidos => {
+              if (snapshotPedidos.exists()) {
                 const pedidosData = snapshotPedidos.val();
-                const pedidosArray = Object.entries(pedidosData).map(([key, val]) => ({ id: key, ...val }));
-                setPedido(pedidosArray[0]);
+                const pedidosArray = Object.entries(pedidosData)
+                  .map(([id, val]) => ({ id, ...val }))
+                  .sort((a, b) => b.timestamp - a.timestamp);
+                setPedidos(pedidosArray);
               } else {
-                setPedido(null);
+                setPedidos([]);
               }
               setLoading(false);
             });
-
           } else {
             setCliente(null);
             setLoading(false);
@@ -232,66 +196,54 @@
         });
       }, []);
 
-      if(loading){
-        return <header>🔄 Carregando dados do seu pedido...</header>;
-      }
-
-      if(!cliente){
-        return <header>❌ Nenhum cliente encontrado no sistema.</header>;
-      }
-
-      if(!pedido){
-        return <header>❌ Nenhum pedido encontrado para o cliente {cliente.nome}</header>;
-      }
-
-      const currentStep = statusSteps.indexOf(pedido.status || "Pendente");
-      const progresso = ((currentStep + 1) / statusSteps.length) * 100;
-      const total = pedido.itens?.reduce((acc, item) => acc + (item.preco * item.quantidade), 0) || 0;
+      if (loading) return <header>🔄 Carregando pedidos...</header>;
+      if (!cliente) return <header>❌ Nenhum cliente encontrado.</header>;
+      if (pedidos.length === 0) return <header>📭 Nenhum pedido feito por {cliente.nome} ainda.</header>;
 
       return (
         <div>
-          <header>🍗 Pedido do Cliente</header>
+          <header>🍗 Pedidos de {cliente.nome}</header>
+          {pedidos.map((pedido, index) => {
+            const currentStep = statusSteps.indexOf(pedido.status || "Pendente");
+            const progresso = ((currentStep + 1) / statusSteps.length) * 100;
+            const total = pedido.itens?.reduce((acc, item) => acc + (item.preco * item.quantidade), 0) || 0;
 
-          <div className="pedido-box">
-            <h3>Cliente: {cliente.nome}</h3>
-            <p><strong>Telefone:</strong> {cliente.telefone}</p>
-            <p><strong>Endereço:</strong> {cliente.endereco}</p>
-            <p><strong>Ponto de referência:</strong> {cliente.ponto}</p>
-            <p><strong>Horário:</strong> {pedido.horario || "-"}</p>
+            return (
+              <div className="pedido-box" key={pedido.id}>
+                <h3>Pedido #{index + 1}</h3>
+                <p><strong>Data:</strong> {pedido.horario || "-"}</p>
+                <ul>
+                  {pedido.itens?.map((item, i) => (
+                    <li key={i}>
+                      {item.nome} x {item.quantidade} — R$ {(item.preco * item.quantidade).toFixed(2)}
+                    </li>
+                  ))}
+                </ul>
+                <div className="total">Total: R$ {total.toFixed(2)}</div>
 
-            <h4>Itens do pedido:</h4>
-            <ul>
-              {pedido.itens?.map((item, i) => (
-                <li key={i}>
-                  {item.nome} x {item.quantidade} — R$ {(item.preco * item.quantidade).toFixed(2)}
-                </li>
-              ))}
-            </ul>
-
-            <div className="total">Total: R$ {total.toFixed(2)}</div>
-
-            <div className="progress">
-              <div className="progress-fill" style={{ width: `${progresso}%` }}></div>
-            </div>
-
-            <div className="steps">
-              {statusSteps.map((status, i) => (
-                <div className="step" key={i}>
-                  <div
-                    className={`circle ${
-                      i < currentStep || (i === currentStep && status === "Entregue")
-                        ? "completed"
-                        : i === currentStep
-                        ? "current"
-                        : ""
-                    }`}
-                    title={status}
-                  ></div>
-                  <div title={status}>{status}</div>
+                <div className="progress">
+                  <div className="progress-fill" style={{ width: `${progresso}%` }}></div>
                 </div>
-              ))}
-            </div>
-          </div>
+
+                <div className="steps">
+                  {statusSteps.map((status, i) => (
+                    <div className="step" key={i}>
+                      <div
+                        className={`circle ${
+                          i < currentStep || (i === currentStep && status === "Entregue")
+                            ? "completed"
+                            : i === currentStep
+                            ? "current"
+                            : ""
+                        }`}
+                      ></div>
+                      <div>{status}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -299,4 +251,4 @@
     ReactDOM.render(<App />, document.getElementById("root"));
   </script>
 </body>
-</html>
+  </html>
