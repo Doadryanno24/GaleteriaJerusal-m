@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Galeteria Jerusalém - Pedido</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+  <style>
+    body { font-family: Inter, Arial, sans-serif; background: #fffbea; margin: 20px auto 80px; max-width: 600px; }
+    header { background: #ff6600; color: white; padding: 16px; border-radius: 12px; margin-bottom: 20px; font-size: 20px; font-weight: bold; text-align: center; }
+    .card { background: white; padding: 24px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); text-align: center; }
+    .preco-original { text-decoration: line-through; color: #888; margin-right: 6px; font-size: 14px; }
+    .preco-promocional { color: red; font-weight: bold; font-size: 18px; }
+    button { background: #ff6600; color: white; border: none; padding: 8px 16px; border-radius: 12px; cursor: pointer; font-size: 18px; margin: 0 8px; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .carrinho { background: white; padding: 16px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); margin-bottom: 24px; }
+    .carrinho ul { padding-left: 0; margin: 0 0 12px; list-style: none; }
+    .item-carrinho { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .status-pedido { background: #ffcc99; color: #cc5200; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+    .status-detalhes { font-size: 16px; color: #444; margin-top: 12px; text-align: left; }
+    .status-detalhes ul { padding-left: 0; list-style: none; margin-top: 8px; }
+    .status-detalhes li { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .fechado-banner { background: #ffe6e6; color: #cc0000; padding: 20px; border-radius: 20px; font-size: 18px; font-weight: bold; margin: 20px 0; text-align: center; box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+    .navbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: #ff6600; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -5px 15px rgba(255, 102, 0, 0.7); border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 1000; }
+    .navbar a { color: white; text-decoration: none; font-weight: 600; font-size: 14px; padding: 6px 14px 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; width: 90px; transition: background-color 0.25s ease, transform 0.2s ease; }
+    .navbar a svg { margin-bottom: 4px; fill: white; width: 24px; height: 24px; }
+    .navbar a:hover { background: #e65c00; transform: scale(1.05); }
+    .navbar a.active { background: #cc5200; box-shadow: 0 0 12px 2px #ffb266; transform: scale(1.1); }
+  </style>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="logo-galeteria.png">
+  <meta name="theme-color" content="#FFE6CEAD" />
+</head>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log("Service Worker registrado"))
+      .catch(err => console.log("Erro no Service Worker", err));
+  }
+</script>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhFm-UjZbk7bnONOJTKFlh6d4nkoQ9gZg",
+      authDomain: "futebol-ao-vivo-ebfd8.firebaseapp.com",
+      databaseURL: "https://futebol-ao-vivo-ebfd8-default-rtdb.firebaseio.com",
+      projectId: "futebol-ao-vivo-ebfd8",
+      storageBucket: "futebol-ao-vivo-ebfd8.appspot.com",
+      messagingSenderId: "946577518523",
+      appId: "1:946577518523:web:c82505eef0328ddabade9e"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function App() {
+      const [cliente, setCliente] = useState(null);
+      const [carregando, setCarregando] = useState(true);
+      const [carrinho, setCarrinho] = useState({});
+      const [ultimoPedido, setUltimoPedido] = useState(null);
+      const [estaAberto, setEstaAberto] = useState(true);
+
+      const produtos = [
+        { nome: "Galeto inteiro", preco: 44, promocao: 40 },
+        { nome: "Banda", preco: 22, promocao: 20 },
+        { nome: "Toscana (unid.)", preco: 3 }
+      ];
+
+      useEffect(() => {
+        const tel = localStorage.getItem("telefone");
+        if (!tel) {
+          alert("Por favor, cadastre seu perfil primeiro.");
+          window.location.href = "perfil.html";
+          return;
+        }
+
+        const clienteRef = db.ref("clientes/" + tel);
+        clienteRef.once("value", snap => {
+          if (snap.exists()) {
+            setCliente(snap.val());
+            setCarregando(false);
+          } else {
+            alert("Cliente não encontrado, favor cadastrar perfil.");
+            window.location.href = "perfil.html";
+          }
+        });
+
+        verificarHorario();
+
+        const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(tel).limitToLast(1);
+        pedidosRef.on("value", snap => {
+          const pedidos = snap.val();
+          if (pedidos) {
+            const id = Object.keys(pedidos)[0];
+            setUltimoPedido({ id, ...pedidos[id] });
+          }
+        });
+
+        return () => pedidosRef.off();
+      }, []);
+
+      function verificarHorario() {
+        const agora = new Date();
+        const hora = agora.getHours();
+        setEstaAberto(hora >= 8 && hora < 14);
+      }
+
+      function alterarQuantidade(prod, delta) {
+        setCarrinho(prev => {
+          const atual = prev[prod.nome]?.quantidade || 0;
+          const novo = atual + delta;
+          if (novo <= 0) {
+            const novoCarrinho = { ...prev };
+            delete novoCarrinho[prod.nome];
+            return novoCarrinho;
+          }
+          return {
+            ...prev,
+            [prod.nome]: {
+              preco: prod.promocao || prod.preco,
+              quantidade: novo
+            }
+          };
+        });
+      }
+
+      function finalizarPedido() {
+        if (!estaAberto) {
+          alert("Estamos fechados no momento. Faça seu pedido entre 08:00 e 14:00.");
+          return;
+        }
+
+        if (Object.keys(carrinho).length === 0) {
+          alert("Carrinho vazio");
+          return;
+        }
+
+        const itens = Object.entries(carrinho).map(([nome, dados]) => ({
+          nome,
+          preco: dados.preco,
+          quantidade: dados.quantidade
+        }));
+
+        const total = itens.reduce((acc, item) => acc + item.preco * item.quantidade, 0);
+
+        const pedido = {
+          nome: cliente.nome,
+          telefone: cliente.telefone,
+          endereco: cliente.endereco + ", " + cliente.numero + " - " + cliente.bairro,
+          ponto: cliente.ponto || "",
+          itens,
+          total,
+          horario: new Date().toLocaleString(),
+          status: "Pendente"
+        };
+
+        db.ref("pedidos").push(pedido, erro => {
+          if (erro) {
+            alert("Erro ao enviar pedido.");
+          } else {
+            alert("Pedido enviado com sucesso!");
+            setCarrinho({});
+          }
+        });
+      }
+
+      if (carregando) return <p>Carregando...</p>;
+
+      return (
+        <div>
+          <header>Olá, {cliente.nome?.split(" ")[0] || cliente.nome} 👋</header>
+
+          {!estaAberto && (
+            <div className="fechado-banner">
+              Estamos fechados no momento. <br />
+              Aceitamos pedidos todos os dias <br />
+              <strong>das 08:00 às 14:00</strong> 🕒
+            </div>
+          )}
+
+          {ultimoPedido && (
+            <div className="status-pedido">
+              Status do seu pedido atual:<br />
+              <strong>{ultimoPedido.status}</strong>
+              <div className="status-detalhes">
+                <p>Cliente: {ultimoPedido.nome}</p>
+                <ul>
+                  {ultimoPedido.itens.map((item, i) => (
+                    <li key={i}>
+                      <span>{item.nome} x {item.quantidade}</span>
+                      <span>R$ {(item.preco * item.quantidade).toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p><strong>Total: R$ {ultimoPedido.total.toFixed(2)}</strong></p>
+              </div>
+            </div>
+          )}
+
+          {produtos.map((prod, i) => (
+            <div key={i} className="card">
+              <h4>{prod.nome}</h4>
+              <p>
+                {prod.promocao ? (
+                  <>
+                    <span className="preco-original">R$ {prod.preco.toFixed(2)}</span>
+                    <span className="preco-promocional">R$ {prod.promocao.toFixed(2)}</span>
+                  </>
+                ) : (
+                  <strong>R$ {prod.preco.toFixed(2)}</strong>
+                )}
+              </p>
+              <div>
+                <button onClick={() => alterarQuantidade(prod, -1)}>-</button>
+                <span>{carrinho[prod.nome]?.quantidade || 0}</span>
+                <button onClick={() => alterarQuantidade(prod, 1)}>+</button>
+              </div>
+            </div>
+          ))}
+
+          <div className="carrinho">
+            <h3>Carrinho</h3>
+            {Object.keys(carrinho).length === 0 ? (
+              <p>Seu carrinho está vazio.</p>
+            ) : (
+              <ul>
+                {Object.entries(carrinho).map(([nome, dados]) => (
+                  <li key={nome} className="item-carrinho">
+                    <span>{nome} x {dados.quantidade}</span>
+                    <span>R$ {(dados.preco * dados.quantidade).toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p><strong>Total:</strong> R$ {Object.entries(carrinho).reduce((acc, [_, dados]) => acc + dados.preco * dados.quantidade, 0).toFixed(2)}</p>
+            <button onClick={finalizarPedido} disabled={!estaAberto}>Finalizar Pedido</button>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+
+  <nav class="navbar">
+    <a href="pedido.html" class="active">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 7v6c0 4 4 6 8 6s8-2 8-6V7l-8-5zM12 12a2 2 0 110-4 2 2 0 010 4z"/></svg>
+      Fazer Pedido
+    </a>
+    <a href="status.html">
+      <svg viewBox="0 0 24 24"><path d="M12 8v5l4 2 1-1.73-3.2-1.6V8zM12 2a10 10 0 1010 10A10 10 0 0012 2z"/></svg>
+      Acompanhar
+    </a>
+    <a href="perfil.html">
+      <svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
+      Perfil
+    </a>
+  </nav>
+</body>
+</html>

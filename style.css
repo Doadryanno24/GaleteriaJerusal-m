@@ -1,0 +1,66 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #fffbea;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-color: #822000;
+  color: white;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header img.logo {
+  height: 40px;
+}
+
+header .icons img {
+  height: 24px;
+  margin-left: 16px;
+  cursor: pointer;
+}
+
+h1 {
+  text-align: center;
+  margin: 20px 0 10px;
+  color: #822000;
+}
+
+.card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 400px;
+}
+
+.card h2 {
+  margin: 0;
+  color: #333;
+}
+
+.card p {
+  font-size: 18px;
+  color: #555;
+  margin: 8px 0;
+}
+
+.card button {
+  padding: 8px 16px;
+  margin-right: 10px;
+  background-color: #822000;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.card button.cancel {
+  background-color: #999;
+}
