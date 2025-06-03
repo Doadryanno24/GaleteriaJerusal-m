@@ -20,7 +20,28 @@
     button:disabled { background: #ccc; cursor: not-allowed; }
     .carrinho { background: white; padding: 16px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); margin-bottom: 24px; }
     .carrinho ul { padding-left: 0; margin: 0 0 12px; list-style: none; }
-    .item-carrinho { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .item-carrinho { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 8px; 
+        padding: 5px 0;
+        border-bottom: 1px dashed #eee;
+    }
+    .item-carrinho:last-child {
+        border-bottom: none;
+    }
+    .item-carrinho span {
+        flex-grow: 1;
+    }
+    .item-carrinho .remove-btn {
+        background: #dc3545; /* Cor vermelha para o botão de remover */
+        font-size: 14px;
+        padding: 4px 8px;
+        margin-left: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
     .status-pedido { background: #ffcc99; color: #cc5200; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
     .status-detalhes { font-size: 16px; color: #444; margin-top: 12px; text-align: left; 
       border: 1px solid #eee; /* Borda padrão leve */
@@ -135,7 +156,7 @@
 </script>
 <body>
   <div id="root"></div>    <script type="text/babel">
-    const { useState, useEffect, useRef } = React; // Adicionado useRef
+    const { useState, useEffect, useRef } = React; 
 
     const firebaseConfig = {
       apiKey: "AIzaSyAhFm-UjZbk7bnONOJTKFlh6d4nkoQ9gZg",
@@ -158,8 +179,8 @@
       const [estaAberto, setEstaAberto] = useState(true);
       const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
       const [troco, setTroco] = useState("");
-      const [showNotification, setShowNotification] = useState(false); // Novo estado para notificação
-      const notifiedOrders = useRef(new Set()); // Para controlar quais pedidos já foram notificados
+      const [showNotification, setShowNotification] = useState(false);
+      const notifiedOrders = useRef(new Set()); 
 
       const produtos = [
         { nome: "Galeto inteiro", preco: 44, promocao: 40 },
@@ -198,19 +219,17 @@
             }
           }
           const sortedPedidos = loadedPedidos.sort((a, b) => {
-            // Converte a string de horário para objeto Date para comparação
             const dateA = new Date(a.horario);
             const dateB = new Date(b.horario);
-            return dateB - dateA; // Ordena do mais recente para o mais antigo
+            return dateB - dateA; 
           });
 
-          // Lógica de notificação para "A caminho"
           sortedPedidos.forEach(pedido => {
             if (pedido.status === "A caminho" && !notifiedOrders.current.has(pedido.id)) {
                 setShowNotification(true);
                 playNotificationSound();
-                notifiedOrders.current.add(pedido.id); // Adiciona à lista de notificados
-                setTimeout(() => setShowNotification(false), 5000); // Esconde a notificação após 5 segundos
+                notifiedOrders.current.add(pedido.id); 
+                setTimeout(() => setShowNotification(false), 5000); 
             }
           });
 
@@ -227,7 +246,7 @@
       }
 
       function playNotificationSound() {
-        const audio = new Audio('https://www.soundjay.com/buttons/beep-07.mp3'); // URL de um som de 'beep' simples
+        const audio = new Audio('https://www.soundjay.com/buttons/beep-07.mp3'); 
         audio.play().catch(e => console.error("Erro ao reproduzir som:", e));
       }
 
@@ -247,6 +266,15 @@
               quantidade: novo
             }
           };
+        });
+      }
+
+      // NOVA FUNÇÃO: Remover item do carrinho
+      function removerItemCarrinho(nomeDoItem) {
+        setCarrinho(prev => {
+          const novoCarrinho = { ...prev };
+          delete novoCarrinho[nomeDoItem];
+          return novoCarrinho;
         });
       }
 
@@ -323,7 +351,7 @@
                   borderColorClass = "a-caminho";
                 } else if (pedido.status === "Entregue") {
                   borderColorClass = "entregue";
-                  statusTextColor = { color: '#4CAF50' }; // Verde para o texto "Entregue"
+                  statusTextColor = { color: '#4CAF50' }; 
                 }
 
                 return (
@@ -380,8 +408,8 @@
               <ul>
                 {Object.entries(carrinho).map(([nome, dados]) => (
                   <li key={nome} className="item-carrinho">
-                    <span>{nome} x {dados.quantidade}</span>
-                    <span>R$ {(dados.preco * dados.quantidade).toFixed(2)}</span>
+                    <span>{nome} x {dados.quantidade} - R$ {(dados.preco * dados.quantidade).toFixed(2)}</span>
+                    <button className="remove-btn" onClick={() => removerItemCarrinho(nome)}>Remover</button>
                   </li>
                 ))}
               </ul>
