@@ -22,19 +22,109 @@
     .carrinho ul { padding-left: 0; margin: 0 0 12px; list-style: none; }
     .item-carrinho { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .status-pedido { background: #ffcc99; color: #cc5200; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
-    .status-detalhes { font-size: 16px; color: #444; margin-top: 12px; text-align: left; }
+    .status-detalhes { font-size: 16px; color: #444; margin-top: 12px; text-align: left; 
+      border: 1px solid #eee; /* Borda padrão leve */
+      border-radius: 10px;
+      padding: 10px;
+      transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
     .status-detalhes ul { padding-left: 0; list-style: none; margin-top: 8px; }
-    .status-detalhes li { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .status-detalhes li { margin-bottom: 6px; padding: 6px 0; border-bottom: 1px dashed #ddd; display: flex; flex-direction: column; }
+    .linha-pedido span { display: flex; justify-content: space-between; }
+    .linha-pedido .nome-qtd { font-weight: 600; }
+    .linha-pedido .preco-unit, .linha-pedido .subtotal { font-size: 14px; color: #666; }
     .fechado-banner { background: #ffe6e6; color: #cc0000; padding: 20px; border-radius: 20px; font-size: 18px; font-weight: bold; margin: 20px 0; text-align: center; box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-    .navbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: #ff6600; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -5px 15px rgba(255, 102, 0, 0.7); border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 1000; }
-    .navbar a { color: white; text-decoration: none; font-weight: 600; font-size: 14px; padding: 6px 14px 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; width: 90px; transition: background-color 0.25s ease, transform 0.2s ease; }
-    .navbar a svg { margin-bottom: 4px; fill: white; width: 24px; height: 24px; }
-    .navbar a:hover { background: #e65c00; transform: scale(1.05); }
-    .navbar a.active { background: #cc5200; box-shadow: 0 0 12px 2px #ffb266; transform: scale(1.1); }
+    select, input[type="number"] {
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    /* Navbar CSS */
+    .navbar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 600px;
+      background: #ff6600;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      box-shadow: 0 -5px 15px rgba(255, 102, 0, 0.7);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      z-index: 1000;
+    }
+    .navbar a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 6px 14px 4px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 90px;
+      transition: background-color 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .navbar a svg {
+      margin-bottom: 4px;
+      fill: white;
+      width: 24px;
+      height: 24px;
+    }
+    .navbar a:hover {
+      background: #e65c00;
+      transform: scale(1.05);
+    }
+    .navbar a.active {
+      background: #cc5200;
+      box-shadow: 0 0 12px 2px #ffb266;
+      transform: scale(1.1);
+    }
+
+    /* Estilo para notificação */
+    .notification-banner {
+        background-color: #4CAF50; /* Verde */
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 1001;
+        animation: fadeInDown 0.5s ease-out;
+    }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Estilos para bordas coloridas no status-detalhes */
+    .status-detalhes.a-caminho {
+        border: 3px solid #ff9800; /* Laranja para "A caminho" */
+        box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
+    }
+    .status-detalhes.entregue {
+        border: 3px solid #4CAF50; /* Verde para "Entregue" */
+        box-shadow: 0 4px 10px rgba(76, 175, 80, 0.2);
+    }
+    /* Estilo para a cor do texto do status */
+    .status-text.entregue {
+      color: #4CAF50; /* Verde para o texto "Entregue" */
+    }
   </style>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="logo-galeteria.png">
-  <meta name="theme-color" content="#FFE6CEAD" />
 </head>
 <script>
   if ('serviceWorker' in navigator) {
@@ -44,10 +134,8 @@
   }
 </script>
 <body>
-  <div id="root"></div>
-
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+  <div id="root"></div>    <script type="text/babel">
+    const { useState, useEffect, useRef } = React; // Adicionado useRef
 
     const firebaseConfig = {
       apiKey: "AIzaSyAhFm-UjZbk7bnONOJTKFlh6d4nkoQ9gZg",
@@ -66,8 +154,12 @@
       const [cliente, setCliente] = useState(null);
       const [carregando, setCarregando] = useState(true);
       const [carrinho, setCarrinho] = useState({});
-      const [ultimoPedido, setUltimoPedido] = useState(null);
+      const [todosPedidos, setTodosPedidos] = useState([]);
       const [estaAberto, setEstaAberto] = useState(true);
+      const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
+      const [troco, setTroco] = useState("");
+      const [showNotification, setShowNotification] = useState(false); // Novo estado para notificação
+      const notifiedOrders = useRef(new Set()); // Para controlar quais pedidos já foram notificados
 
       const produtos = [
         { nome: "Galeto inteiro", preco: 44, promocao: 40 },
@@ -96,13 +188,33 @@
 
         verificarHorario();
 
-        const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(tel).limitToLast(1);
+        const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(tel);
         pedidosRef.on("value", snap => {
-          const pedidos = snap.val();
-          if (pedidos) {
-            const id = Object.keys(pedidos)[0];
-            setUltimoPedido({ id, ...pedidos[id] });
+          const pedidosData = snap.val();
+          const loadedPedidos = [];
+          if (pedidosData) {
+            for (let key in pedidosData) {
+              loadedPedidos.push({ id: key, ...pedidosData[key] });
+            }
           }
+          const sortedPedidos = loadedPedidos.sort((a, b) => {
+            // Converte a string de horário para objeto Date para comparação
+            const dateA = new Date(a.horario);
+            const dateB = new Date(b.horario);
+            return dateB - dateA; // Ordena do mais recente para o mais antigo
+          });
+
+          // Lógica de notificação para "A caminho"
+          sortedPedidos.forEach(pedido => {
+            if (pedido.status === "A caminho" && !notifiedOrders.current.has(pedido.id)) {
+                setShowNotification(true);
+                playNotificationSound();
+                notifiedOrders.current.add(pedido.id); // Adiciona à lista de notificados
+                setTimeout(() => setShowNotification(false), 5000); // Esconde a notificação após 5 segundos
+            }
+          });
+
+          setTodosPedidos(sortedPedidos);
         });
 
         return () => pedidosRef.off();
@@ -112,6 +224,11 @@
         const agora = new Date();
         const hora = agora.getHours();
         setEstaAberto(hora >= 8 && hora < 14);
+      }
+
+      function playNotificationSound() {
+        const audio = new Audio('https://www.soundjay.com/buttons/beep-07.mp3'); // URL de um som de 'beep' simples
+        audio.play().catch(e => console.error("Erro ao reproduzir som:", e));
       }
 
       function alterarQuantidade(prod, delta) {
@@ -157,6 +274,8 @@
           telefone: cliente.telefone,
           endereco: cliente.endereco + ", " + cliente.numero + " - " + cliente.bairro,
           ponto: cliente.ponto || "",
+          formaPagamento,
+          troco: formaPagamento === "Dinheiro" && troco !== "" ? troco : "Sem troco",
           itens,
           total,
           horario: new Date().toLocaleString(),
@@ -169,6 +288,8 @@
           } else {
             alert("Pedido enviado com sucesso!");
             setCarrinho({});
+            setTroco("");
+            setFormaPagamento("Dinheiro");
           }
         });
       }
@@ -177,6 +298,11 @@
 
       return (
         <div>
+          {showNotification && (
+            <div className="notification-banner">
+              🎉 Seu pedido está a caminho! 🎉
+            </div>
+          )}
           <header>Olá, {cliente.nome?.split(" ")[0] || cliente.nome} 👋</header>
 
           {!estaAberto && (
@@ -187,24 +313,43 @@
             </div>
           )}
 
-          {ultimoPedido && (
-            <div className="status-pedido">
-              Status do seu pedido atual:<br />
-              <strong>{ultimoPedido.status}</strong>
-              <div className="status-detalhes">
-                <p>Cliente: {ultimoPedido.nome}</p>
-                <ul>
-                  {ultimoPedido.itens.map((item, i) => (
-                    <li key={i}>
-                      <span>{item.nome} x {item.quantidade}</span>
-                      <span>R$ {(item.preco * item.quantidade).toFixed(2)}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p><strong>Total: R$ {ultimoPedido.total.toFixed(2)}</strong></p>
-              </div>
-            </div>
-          )}
+          <div className="status-pedido">
+            <h3>Seus Pedidos Anteriores</h3>
+            {todosPedidos.length > 0 ? (
+              todosPedidos.map((pedido, index) => {
+                let borderColorClass = "";
+                let statusTextColor = {};
+                if (pedido.status === "A caminho") {
+                  borderColorClass = "a-caminho";
+                } else if (pedido.status === "Entregue") {
+                  borderColorClass = "entregue";
+                  statusTextColor = { color: '#4CAF50' }; // Verde para o texto "Entregue"
+                }
+
+                return (
+                  <div key={pedido.id} className={`status-detalhes ${borderColorClass}`} style={{ marginBottom: '15px', paddingBottom: '10px' }}>
+                    <p>
+                      <strong>Pedido {todosPedidos.length - index}#</strong> - Status:
+                      <strong className="status-text" style={statusTextColor}> {pedido.status}</strong>
+                    </p>
+                    <ul>
+                      {pedido.itens.map((item, i) => (
+                        <li key={i} className="linha-pedido">
+                          <span className="nome-qtd">{item.nome} x {item.quantidade}</span>
+                          <span className="preco-unit">Preço unitário: R$ {item.preco.toFixed(2)}</span>
+                          <span className="subtotal">Subtotal: R$ {(item.preco * item.quantidade).toFixed(2)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p><strong>Total do Pedido: R$ {pedido.total.toFixed(2)}</strong></p>
+                    <p>Horário do pedido: {pedido.horario}</p>
+                  </div>
+                );
+              })
+            ) : (
+              <p>Você não possui pedidos anteriores.</p>
+            )}
+          </div>
 
           {produtos.map((prod, i) => (
             <div key={i} className="card">
@@ -242,6 +387,23 @@
               </ul>
             )}
             <p><strong>Total:</strong> R$ {Object.entries(carrinho).reduce((acc, [_, dados]) => acc + dados.preco * dados.quantidade, 0).toFixed(2)}</p>
+
+            <label>Forma de Pagamento:</label>
+            <select value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value)}>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Cartão">Cartão</option>
+              <option value="Pix">Pix</option>
+            </select>
+
+            {formaPagamento === "Dinheiro" && (
+              <input
+                type="number"
+                placeholder="Precisa de troco? Digite o valor"
+                value={troco}
+                onChange={(e) => setTroco(e.target.value)}
+              />
+            )}
+
             <button onClick={finalizarPedido} disabled={!estaAberto}>Finalizar Pedido</button>
           </div>
         </div>
@@ -250,17 +412,16 @@
 
     ReactDOM.render(<App />, document.getElementById("root"));
   </script>
-
-  <nav class="navbar">
-    <a href="pedido.html" class="active">
+  <nav class="navbar" role="navigation" aria-label="Navegação principal">
+    <a href="home.html" class="active" aria-label="Fazer Pedido">
       <svg viewBox="0 0 24 24"><path d="M12 2L4 7v6c0 4 4 6 8 6s8-2 8-6V7l-8-5zM12 12a2 2 0 110-4 2 2 0 010 4z"/></svg>
       Fazer Pedido
     </a>
-    <a href="status.html">
+    <a href="status.html" aria-label="Acompanhar Pedido">
       <svg viewBox="0 0 24 24"><path d="M12 8v5l4 2 1-1.73-3.2-1.6V8zM12 2a10 10 0 1010 10A10 10 0 0012 2z"/></svg>
       Acompanhar
     </a>
-    <a href="perfil.html">
+    <a href="perfil.html" aria-label="Perfil">
       <svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
       Perfil
     </a>
