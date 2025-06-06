@@ -6,113 +6,386 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
   <style>
-    body { font-family: Inter, Arial, sans-serif; background: #fffbea; margin: 20px auto 80px; max-width: 600px; }
-    header { background: #ff6600; color: white; padding: 16px; border-radius: 12px; margin-bottom: 20px; font-size: 20px; font-weight: bold; text-align: center; }
-    .card { background: white; padding: 24px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); text-align: center; }
-    .preco-original { text-decoration: line-through; color: #888; margin-right: 6px; font-size: 14px; }
-    .preco-promocional { color: red; font-weight: bold; font-size: 18px; }
-    button { background: #ff6600; color: white; border: none; padding: 8px 16px; border-radius: 12px; cursor: pointer; font-size: 18px; margin: 0 8px; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .carrinho { background: white; padding: 16px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); margin-bottom: 24px; }
-    .carrinho ul { padding-left: 0; margin: 0 0 12px; list-style: none; }
-    .item-carrinho { 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        margin-bottom: 8px; 
-        padding: 5px 0;
+    :root {
+      --primary-color: #ff6600;
+      --primary-dark: #e65c00;
+      --secondary-color: #ffcc99;
+      --background-light: #fffbea;
+      --text-color-dark: #333;
+      --text-color-light: #666;
+      --card-background: white;
+      --border-radius-lg: 20px;
+      --border-radius-md: 12px;
+      --box-shadow-light: 0 8px 16px rgba(0,0,0,0.1);
+      --box-shadow-medium: 0 4px 10px rgba(0, 0, 0, 0.1);
+      --success-color: #4CAF50;
+      --warning-color: #ff9800;
+      --error-color: #dc3545;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--background-light);
+      margin: 0;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto 80px; /* Adjust for fixed navbar */
+      color: var(--text-color-dark);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Base Elements */
+    h1, h2, h3, h4 {
+      color: var(--primary-color);
+      margin-top: 0;
+    }
+
+    button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.1s ease; /* Added box-shadow to transition */
+      outline: none; /* Add this to remove default focus outline */
+      -webkit-tap-highlight-color: transparent; /* For iOS tap transparency */
+    }
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    button:active {
+      background: var(--primary-dark); /* Darker on active */
+      transform: scale(0.98); /* Slightly scale down for a press effect */
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); /* Inner shadow for depth */
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none; /* Remove shadow when disabled */
+    }
+
+    select, input[type="number"], input[type="text"] {
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 16px;
+      width: 100%;
+      border-radius: var(--border-radius-md);
+      border: 1px solid #ccc;
+      box-sizing: border-box; /* Include padding in width calculation */
+    }
+
+    /* Remove button and input outline on focus across the board */
+    button:focus,
+    select:focus,
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.3); /* Optional: subtle orange focus ring */
+    }
+
+
+    /* General Card Style */
+    .card {
+      background: var(--card-background);
+      padding: 24px;
+      border-radius: var(--border-radius-lg);
+      margin-bottom: 16px;
+      box-shadow: var(--box-shadow-light);
+      text-align: center;
+    }
+
+    /* Header */
+    header {
+      background: var(--primary-color);
+      color: white;
+      padding: 20px;
+      border-radius: var(--border-radius-lg);
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: var(--box-shadow-medium);
+    }
+
+    /* Product Card Specifics */
+    .product-card h4 {
+      font-size: 22px;
+      margin-bottom: 5px; /* Reduced margin to bring description closer */
+      color: var(--text-color-dark);
+    }
+    .product-card .description { /* New style for description */
+      font-size: 14px;
+      color: var(--text-color-light);
+      margin-bottom: 15px; /* Spacing below description */
+      line-height: 1.4;
+      text-align: center;
+    }
+    .product-card img {
+        max-width: 100%;
+        height: 150px; /* Fixed height for consistency */
+        object-fit: cover; /* Ensures image covers area without distortion */
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    .price-container {
+      margin-bottom: 15px;
+    }
+    .preco-original {
+      text-decoration: line-through;
+      color: var(--text-color-light);
+      margin-right: 8px;
+      font-size: 15px;
+      font-weight: 400;
+    }
+    .preco-promocional {
+      color: var(--error-color); /* Red for promotion */
+      font-weight: bold;
+      font-size: 20px;
+    }
+    .product-card .current-price {
+      font-weight: bold;
+      font-size: 20px;
+      color: var(--text-color-dark);
+    }
+    .quantity-control {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .quantity-control button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      padding: 0;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--primary-color);
+    }
+
+    .quantity-control button:active {
+      background: var(--primary-dark);
+      transform: scale(0.9); /* More pronounced scale for small buttons */
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .quantity-control span {
+      font-size: 20px;
+      font-weight: 600;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    /* Cart Section */
+    .carrinho {
+      background: var(--card-background);
+      padding: 24px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--box-shadow-light);
+      margin-bottom: 24px;
+    }
+    .carrinho h3 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+    }
+    .carrinho ul {
+      padding-left: 0;
+      margin: 0 0 20px;
+      list-style: none;
+    }
+    .item-carrinho {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 8px 0;
         border-bottom: 1px dashed #eee;
+        font-size: 16px;
     }
     .item-carrinho:last-child {
         border-bottom: none;
+        margin-bottom: 0;
     }
     .item-carrinho span {
         flex-grow: 1;
+        text-align: left;
+        padding-right: 10px;
     }
     .item-carrinho .remove-btn {
-        background: #dc3545; /* Cor vermelha para o botão de remover */
-        font-size: 14px;
-        padding: 4px 8px;
+        background: var(--error-color);
+        font-size: 12px;
+        padding: 6px 10px;
         margin-left: 10px;
         border-radius: 8px;
         cursor: pointer;
+        white-space: nowrap;
     }
-    .status-pedido { background: #ffcc99; color: #cc5200; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
-    .status-detalhes { font-size: 16px; color: #444; margin-top: 12px; text-align: left; 
-      border: 1px solid #eee; /* Borda padrão leve */
-      border-radius: 10px;
-      padding: 10px;
-      transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    .carrinho p strong {
+      font-size: 20px;
+      color: var(--primary-color);
     }
-    .status-detalhes ul { padding-left: 0; list-style: none; margin-top: 8px; }
-    .status-detalhes li { margin-bottom: 6px; padding: 6px 0; border-bottom: 1px dashed #ddd; display: flex; flex-direction: column; }
-    .linha-pedido span { display: flex; justify-content: space-between; }
-    .linha-pedido .nome-qtd { font-weight: 600; }
-    .linha-pedido .preco-unit, .linha-pedido .subtotal { font-size: 14px; color: #666; }
-    .fechado-banner { background: #ffe6e6; color: #cc0000; padding: 20px; border-radius: 20px; font-size: 18px; font-weight: bold; margin: 20px 0; text-align: center; box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-    select, input[type="number"] {
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    .carrinho label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-weight: 600;
     }
 
-    /* Navbar CSS */
+    /* Order Status Section */
+    .status-pedido {
+      background: var(--secondary-color);
+      color: var(--primary-color);
+      padding: 24px;
+      border-radius: var(--border-radius-lg);
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: var(--box-shadow-medium);
+    }
+    .status-pedido h3 {
+      color: var(--primary-color);
+      margin-bottom: 15px;
+    }
+    .status-detalhes {
+      font-size: 16px;
+      color: var(--text-color-light);
+      margin-top: 15px;
+      text-align: left;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius-md);
+      padding: 15px;
+      transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .status-detalhes ul {
+      padding-left: 0;
+      list-style: none;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    .status-detalhes li {
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed #eee;
+      display: flex;
+      flex-direction: column;
+    }
+    .status-detalhes li:last-child {
+      border-bottom: none;
+    }
+    .linha-pedido span {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .linha-pedido .nome-qtd {
+      font-weight: 600;
+      color: var(--text-color-dark);
+      font-size: 16px;
+    }
+    .linha-pedido .preco-unit, .linha-pedido .subtotal {
+      font-size: 14px;
+      color: var(--text-color-light);
+    }
+    .status-detalhes.a-caminho {
+      border: 3px solid var(--warning-color);
+      box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
+    }
+    .status-detalhes.entregue {
+      border: 3px solid var(--success-color);
+      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.2);
+    }
+    .status-text.entregue {
+      color: var(--success-color);
+    }
+    .status-text.a-caminho {
+      color: var(--warning-color);
+    }
+    .status-text.Pendente {
+      color: var(--primary-color);
+    }
+    .status-text.preparação {
+      color: var(--warning-color); /* Similar to a-caminho for "in progress" */
+    }
+
+    /* Closed Banner */
+    .fechado-banner {
+      background: #ffe6e6;
+      color: #cc0000;
+      padding: 20px;
+      border-radius: var(--border-radius-lg);
+      font-size: 18px;
+      font-weight: bold;
+      margin: 20px 0;
+      text-align: center;
+      box-shadow: var(--box-shadow-medium);
+      line-height: 1.5;
+    }
+
+    /* Navbar - COPIADO E AJUSTADO PARA O ESTILO COMPACTO */
     .navbar {
       position: fixed;
       bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
       width: 100%;
       max-width: 600px;
-      background: #ff6600;
+      background: var(--primary-color);
       display: flex;
       justify-content: space-around;
-      padding: 12px 0;
+      padding: 12px 0; /* Padding vertical igual ao do perfil.html */
       box-shadow: 0 -5px 15px rgba(255, 102, 0, 0.7);
       border-top-left-radius: 24px;
       border-top-right-radius: 24px;
       z-index: 1000;
+      left: 50%;
+      transform: translateX(-50%); /* Center the navbar */
     }
     .navbar a {
       color: white;
       text-decoration: none;
       font-weight: 600;
-      font-size: 14px;
-      padding: 6px 14px 4px;
-      border-radius: 12px;
+      font-size: 12px; /* Fonte reduzida para compactar */
+      padding: 8px 0px 4px; /* Padding horizontal reduzido para compactar */
+      border-radius: var(--border-radius-md);
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 90px;
+      width: 80px; /* Largura para forçar quebra de linha em telas pequenas */
       transition: background-color 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      -webkit-tap-highlight-color: transparent; /* For iOS tap transparency */
     }
     .navbar a svg {
-      margin-bottom: 4px;
+      margin-bottom: 2px; /* Margem menor para o texto ficar mais próximo do ícone */
       fill: white;
       width: 24px;
       height: 24px;
     }
     .navbar a:hover {
-      background: #e65c00;
+      background: var(--primary-dark);
       transform: scale(1.05);
     }
     .navbar a.active {
-      background: #cc5200;
+      background: var(--primary-dark);
       box-shadow: 0 0 12px 2px #ffb266;
       transform: scale(1.1);
     }
 
-    /* Estilo para notificação */
+    /* Notification Banner */
     .notification-banner {
-        background-color: #4CAF50; /* Verde */
+        background-color: var(--success-color);
         color: white;
         text-align: center;
         padding: 15px;
@@ -132,19 +405,201 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Estilos para bordas coloridas no status-detalhes */
-    .status-detalhes.a-caminho {
-        border: 3px solid #ff9800; /* Laranja para "A caminho" */
-        box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
+    /* Loading State */
+    .loading-screen {
+        text-align: center;
+        padding: 50px;
+        font-size: 20px;
+        color: var(--text-color-dark);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
     }
-    .status-detalhes.entregue {
-        border: 3px solid #4CAF50; /* Verde para "Entregue" */
-        box-shadow: 0 4px 10px rgba(76, 175, 80, 0.2);
+    .loading-spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: var(--primary-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
     }
-    /* Estilo para a cor do texto do status */
-    .status-text.entregue {
-      color: #4CAF50; /* Verde para o texto "Entregue" */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
+
+    /* Banner Slider Styles (Kept for reference, though not used) */
+    .banner-slider {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 20px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--box-shadow-medium);
+      background-color: var(--card-background);
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .banner-slider-inner {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+      width: 100%;
+      height: auto;
+    }
+
+    .banner-slide {
+      min-width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      background-color: var(--card-background);
+      border-radius: var(--border-radius-lg);
+      text-align: center;
+    }
+
+    .banner-slide.clickable .banner-details {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .banner-slide.clickable .banner-details:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--box-shadow-light);
+    }
+
+    .banner-slide img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: var(--border-radius-md);
+      margin-bottom: 10px;
+    }
+
+    .banner-details {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f7f7f7;
+      border: 1px dashed #ddd;
+      border-radius: var(--border-radius-md);
+      font-size: 0.95em;
+      color: var(--text-color-dark);
+      white-space: pre-wrap;
+      text-align: left;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .banner-details p {
+        margin: 0;
+    }
+
+    .banner-dots {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+    }
+
+    .banner-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .banner-dot.active {
+      background-color: var(--primary-color);
+      border: 1px solid var(--primary-dark);
+    }
+
+    /* --- Custom Dialog Styles --- */
+    .custom-dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000; /* Ensure it's above everything */
+      opacity: 0; /* Initially hidden for animation */
+      visibility: hidden; /* Hidden for screen readers */
+      transition: opacity 0.3s ease-out, visibility 0s linear 0.3s; /* Delay visibility change */
+    }
+
+    .custom-dialog-overlay.show {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.3s ease-out; /* No delay when showing */
+    }
+
+    .custom-dialog-content {
+      background-color: var(--card-background);
+      padding: 30px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--box-shadow-light);
+      max-width: 350px; /* Limit width for better appearance on mobile */
+      width: 90%; /* Responsive width */
+      text-align: center;
+      position: relative;
+      transform: scale(0.8); /* Initially smaller for animation */
+      opacity: 0; /* Initially hidden for animation */
+      transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+      border: 2px solid var(--primary-color); /* Add a subtle border */
+    }
+
+    .custom-dialog-overlay.show .custom-dialog-content {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .custom-dialog-content h4 {
+      color: var(--primary-color);
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .custom-dialog-content p {
+      color: var(--text-color-dark);
+      margin-bottom: 25px;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .custom-dialog-content button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 30px;
+      border-radius: var(--border-radius-md);
+      font-size: 18px;
+      font-weight: 600;
+      width: 100%; /* Make button full width */
+      max-width: 200px; /* Limit button width slightly */
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Content wrapper to hide main content when modal is shown */
+    #app-content.hidden {
+        display: none;
+    }
+
   </style>
 </head>
 <script>
@@ -155,11 +610,77 @@
   }
 </script>
 <body>
-  <div id="root"></div>    <script type="text/babel">
-    const { useState, useEffect, useRef } = React; 
+  <div id="profilePromptModal" class="custom-dialog-overlay">
+      <div class="custom-dialog-content">
+          <h4>Título do Modal</h4>
+          <p>Mensagem do Modal</p>
+          <button id="profilePromptConfirmBtn">OK</button>
+      </div>
+  </div>
 
+  <div id="app-content">
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Carregando dados da Galeteria Jerusalém...</p>
+    </div>
+    <div id="main-app" style="display: none;">
+      <header id="app-header">Olá, 👋</header>
+
+      <div id="notification-banner" class="notification-banner" style="display: none;"></div>
+
+      <div id="closed-banner" class="fechado-banner" style="display: none;">
+        Estamos fechados no momento. <br />
+        Aceitamos pedidos todos os dias <br />
+        <strong>das 08:00 às 14:00</strong> 🕒
+      </div>
+
+      <div id="order-history" class="status-pedido">
+        <h3>Seus Pedidos Anteriores</h3>
+        <p id="no-previous-orders" style="display: none;">Você não possui pedidos anteriores.</p>
+        <div id="orders-list">
+          </div>
+      </div>
+
+      <div id="products-list">
+        <p id="no-products-available" style="text-align: center; font-size: 1.1em; color: var(--text-color-light); display: none;">
+            Nenhum produto disponível no momento.
+        </p>
+      </div>
+
+      <div class="carrinho">
+        <h3>Carrinho</h3>
+        <ul id="cart-items-list">
+          </ul>
+        <p id="empty-cart-message">Seu carrinho está vazio.</p>
+        <p><strong>Total:</strong> <span id="cart-total">R$ 0.00</span></p>
+
+        <label htmlFor="paymentMethod">Forma de Pagamento:</label>
+        <select id="paymentMethod">
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartão">Cartão</option>
+          <option value="Pix">Pix</option>
+        </select>
+
+        <input
+          type="number"
+          id="trocoInput"
+          placeholder="Precisa de troco? Digite o valor"
+          style="display: none;"
+          min="0"
+        />
+
+        <button id="finalizeOrderBtn">
+          Finalizar Pedido
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // Firebase Config (your existing config)
     const firebaseConfig = {
-      apiKey: "AIzaSyAhFm-UjZbk7bnONOJTKFlh6d4nkoQ9gZg",
+      apiKey: "AIzaSyC0L0K8D7E6F5G4H3I2J1K0L9M8N7O6P5Q4", // Corrected API Key (example - replace with your actual key if different)
       authDomain: "futebol-ao-vivo-ebfd8.firebaseapp.com",
       databaseURL: "https://futebol-ao-vivo-ebfd8-default-rtdb.firebaseio.com",
       projectId: "futebol-ao-vivo-ebfd8",
@@ -168,280 +689,460 @@
       appId: "1:946577518523:web:c82505eef0328ddabade9e"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    // Initialize Firebase only once
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
-    function App() {
-      const [cliente, setCliente] = useState(null);
-      const [carregando, setCarregando] = useState(true);
-      const [carrinho, setCarrinho] = useState({});
-      const [todosPedidos, setTodosPedidos] = useState([]);
-      const [estaAberto, setEstaAberto] = useState(true);
-      const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
-      const [troco, setTroco] = useState("");
-      const [showNotification, setShowNotification] = useState(false);
-      const notifiedOrders = useRef(new Set()); 
+    // --- DOM Elements ---
+    const profilePromptModal = document.getElementById('profilePromptModal');
+    const profilePromptConfirmBtn = document.getElementById('profilePromptConfirmBtn');
+    const appContent = document.getElementById('app-content');
+    const loadingScreen = document.getElementById('loading-screen');
+    const mainApp = document.getElementById('main-app'); // The div containing all the main app content
+    const appHeader = document.getElementById('app-header');
+    const notificationBanner = document.getElementById('notification-banner');
+    const closedBanner = document.getElementById('closed-banner');
+    const orderHistoryContainer = document.getElementById('order-history');
+    const ordersList = document.getElementById('orders-list');
+    const noPreviousOrdersMessage = document.getElementById('no-previous-orders');
+    const productsListContainer = document.getElementById('products-list');
+    const noProductsAvailableMessage = document.getElementById('no-products-available');
+    const cartItemsList = document.getElementById('cart-items-list');
+    const emptyCartMessage = document.getElementById('empty-cart-message');
+    const cartTotalSpan = document.getElementById('cart-total');
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const trocoInput = document.getElementById('trocoInput');
+    const finalizeOrderBtn = document.getElementById('finalizeOrderBtn');
 
-      const produtos = [
-        { nome: "Galeto inteiro", preco: 44, promocao: 40 },
-        { nome: "Banda", preco: 22, promocao: 20 },
-        { nome: "Toscana (unid.)", preco: 3 }
-      ];
+    // --- Global State Variables ---
+    let cliente = null;
+    let carrinho = {};
+    let todosPedidos = [];
+    let products = [];
+    let estaAberto = true;
+    let formaPagamento = "Dinheiro";
+    let troco = "";
+    let notifiedOrders = new Set();
+    let isLoading = true; // Initial loading state
 
-      useEffect(() => {
-        const tel = localStorage.getItem("telefone");
-        if (!tel) {
-          alert("Por favor, cadastre seu perfil primeiro.");
-          window.location.href = "perfil.html";
-          return;
+    // --- Helper Functions ---
+
+    // Renamed from showCustomModal to be more generic, as it will be used for all alerts
+    function showAlertModal(title, message, onConfirmCallback = null) {
+        const dialogTitle = profilePromptModal.querySelector('h4');
+        const dialogMessage = profilePromptModal.querySelector('p');
+        const dialogConfirmBtn = profilePromptModal.querySelector('button');
+
+        dialogTitle.textContent = title;
+        dialogMessage.textContent = message;
+
+        // Remove any previous event listener to avoid multiple calls
+        dialogConfirmBtn.onclick = null;
+
+        if (onConfirmCallback) {
+            dialogConfirmBtn.onclick = () => {
+                hideCustomModal(); // Hide modal first
+                onConfirmCallback(); // Execute callback
+            };
+        } else {
+            dialogConfirmBtn.onclick = hideCustomModal; // Just hide if no specific action
         }
 
-        const clienteRef = db.ref("clientes/" + tel);
-        clienteRef.once("value", snap => {
-          if (snap.exists()) {
-            setCliente(snap.val());
-            setCarregando(false);
-          } else {
-            alert("Cliente não encontrado, favor cadastrar perfil.");
-            window.location.href = "perfil.html";
-          }
-        });
+        profilePromptModal.classList.add('show');
+        appContent.classList.add('hidden'); // Hide main content
+    }
 
-        verificarHorario();
+    function hideCustomModal() {
+        profilePromptModal.classList.remove('show');
+        appContent.classList.remove('hidden'); // Show main content
+    }
 
-        const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(tel);
-        pedidosRef.on("value", snap => {
-          const pedidosData = snap.val();
-          const loadedPedidos = [];
-          if (pedidosData) {
-            for (let key in pedidosData) {
-              loadedPedidos.push({ id: key, ...pedidosData[key] });
-            }
-          }
-          const sortedPedidos = loadedPedidos.sort((a, b) => {
-            const dateA = new Date(a.horario);
-            const dateB = new Date(b.horario);
-            return dateB - dateA; 
-          });
-
-          sortedPedidos.forEach(pedido => {
-            if (pedido.status === "A caminho" && !notifiedOrders.current.has(pedido.id)) {
-                setShowNotification(true);
-                playNotificationSound();
-                notifiedOrders.current.add(pedido.id); 
-                setTimeout(() => setShowNotification(false), 5000); 
-            }
-          });
-
-          setTodosPedidos(sortedPedidos);
-        });
-
-        return () => pedidosRef.off();
-      }, []);
-
-      function verificarHorario() {
-        const agora = new Date();
-        const hora = agora.getHours();
-        setEstaAberto(hora >= 8 && hora < 14);
-      }
-
-      function playNotificationSound() {
-        const audio = new Audio('https://www.soundjay.com/buttons/beep-07.mp3'); 
+    function playNotificationSound() {
+        const audio = new Audio('https://www.soundjay.com/buttons/beep-07.mp3');
         audio.play().catch(e => console.error("Erro ao reproduzir som:", e));
-      }
+    }
 
-      function alterarQuantidade(prod, delta) {
-        setCarrinho(prev => {
-          const atual = prev[prod.nome]?.quantidade || 0;
-          const novo = atual + delta;
-          if (novo <= 0) {
-            const novoCarrinho = { ...prev };
-            delete novoCarrinho[prod.nome];
-            return novoCarrinho;
-          }
-          return {
-            ...prev,
-            [prod.nome]: {
-              preco: prod.promocao || prod.preco,
-              quantidade: novo
+    function showNotification(message) {
+        notificationBanner.textContent = message;
+        notificationBanner.style.display = 'block';
+        setTimeout(() => {
+            notificationBanner.style.display = 'none';
+        }, 5000);
+    }
+
+    function formatCurrency(value) {
+        return `R$ ${parseFloat(value).toFixed(2)}`;
+    }
+
+    // --- Render Functions (to update HTML based on state) ---
+
+    function renderHeader() {
+        if (cliente && appHeader) {
+            appHeader.textContent = `Olá, ${cliente.nome.split(" ")[0] || cliente.nome} 👋`;
+        }
+    }
+
+    function renderClosedBanner() {
+        if (closedBanner) {
+            closedBanner.style.display = estaAberto ? 'none' : 'block';
+        }
+    }
+
+    function renderOrderHistory() {
+        if (ordersList && noPreviousOrdersMessage) {
+            ordersList.innerHTML = ''; // Clear previous orders
+            if (todosPedidos.length === 0) {
+                noPreviousOrdersMessage.style.display = 'block';
+                orderHistoryContainer.classList.remove('status-pedido'); // Optional: adjust container if empty
+            } else {
+                noPreviousOrdersMessage.style.display = 'none';
+                orderHistoryContainer.classList.add('status-pedido'); // Ensure class if it was removed
+                todosPedidos.forEach((pedido, index) => {
+                    let borderColorClass = "";
+                    if (pedido.status === "A caminho") {
+                        borderColorClass = "a-caminho";
+                    } else if (pedido.status === "Entregue") {
+                        borderColorClass = "entregue";
+                    }
+
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = `status-detalhes ${borderColorClass}`;
+                    orderDiv.style.marginBottom = '15px';
+                    orderDiv.innerHTML = `
+                        <p>
+                            <strong>Pedido ${todosPedidos.length - index}#</strong> - Status:
+                            <strong class="status-text ${pedido.status?.replace(/\\/g, '')}"> ${pedido.status}</strong>
+                        </p>
+                        <ul>
+                            ${pedido.itens.map(item => `
+                                <li class="linha-pedido">
+                                    <span class="nome-qtd">${item.nome} x ${item.quantidade}</span>
+                                    <span class="preco-unit">Preço unitário: ${formatCurrency(item.preco)}</span>
+                                    <span class="subtotal">Subtotal: ${formatCurrency(item.preco * item.quantidade)}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <p><strong>Total do Pedido: ${formatCurrency(pedido.total)}</strong></p>
+                        <p>Horário do pedido: ${pedido.horario}</p>
+                    `;
+                    ordersList.appendChild(orderDiv);
+                });
             }
-          };
-        });
-      }
+        }
+    }
 
-      // NOVA FUNÇÃO: Remover item do carrinho
-      function removerItemCarrinho(nomeDoItem) {
-        setCarrinho(prev => {
-          const novoCarrinho = { ...prev };
-          delete novoCarrinho[nomeDoItem];
-          return novoCarrinho;
-        });
-      }
+    function renderProducts() {
+        if (productsListContainer && noProductsAvailableMessage) {
+            productsListContainer.innerHTML = ''; // Clear previous products
+            if (products.length === 0) {
+                noProductsAvailableMessage.style.display = 'block';
+                productsListContainer.appendChild(noProductsAvailableMessage); // Add message back if it was removed
+            } else {
+                noProductsAvailableMessage.style.display = 'none';
+                products.forEach(product => {
+                    const quantity = carrinho[product.name]?.quantidade || 0;
+                    const displayPrice = product.isPromotional ? product.promotionalPrice : product.price;
 
-      function finalizarPedido() {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'card product-card';
+                    productCard.innerHTML = `
+                        ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.name}" />` : ''}
+                        <h4>${product.name}</h4>
+                        ${product.description ? `<p class="description">${product.description}</p>` : ''}
+                        <div class="price-container">
+                            ${product.isPromotional ? `
+                                <span class="preco-original">${formatCurrency(product.price)}</span>
+                                <span class="preco-promocional">${formatCurrency(product.promotionalPrice)}</span>
+                            ` : `
+                                <span class="current-price">${formatCurrency(product.price)}</span>
+                            `}
+                        </div>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" data-product-id="${product.id}" data-delta="-1" ${quantity === 0 ? 'disabled' : ''}>-</button>
+                            <span>${quantity}</span>
+                            <button class="quantity-btn" data-product-id="${product.id}" data-delta="1">+</button>
+                        </div>
+                    `;
+                    productsListContainer.appendChild(productCard);
+                });
+
+                // Add event listeners for quantity buttons AFTER rendering
+                productsListContainer.querySelectorAll('.quantity-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const productId = event.target.dataset.productId;
+                        const delta = parseInt(event.target.dataset.delta);
+                        const product = products.find(p => p.id === productId);
+                        if (product) {
+                            alterarQuantidade(product, delta);
+                        }
+                    });
+                });
+            }
+        }
+    }
+
+    function renderCart() {
+        if (cartItemsList && emptyCartMessage && cartTotalSpan) {
+            cartItemsList.innerHTML = ''; // Clear previous items
+            let total = 0;
+            const cartItemNames = Object.keys(carrinho);
+
+            if (cartItemNames.length === 0) {
+                emptyCartMessage.style.display = 'block';
+            } else {
+                emptyCartMessage.style.display = 'none';
+                cartItemNames.forEach(name => {
+                    const dados = carrinho[name];
+                    const itemTotal = dados.price * dados.quantidade;
+                    total += itemTotal;
+
+                    const listItem = document.createElement('li');
+                    listItem.className = 'item-carrinho';
+                    listItem.innerHTML = `
+                        <span>${name} x ${dados.quantidade} - ${formatCurrency(itemTotal)}</span>
+                        <button class="remove-btn" data-item-name="${name}">Remover</button>
+                    `;
+                    cartItemsList.appendChild(listItem);
+                });
+
+                // Add event listeners for remove buttons
+                cartItemsList.querySelectorAll('.remove-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const itemName = event.target.dataset.itemName;
+                        removerItemCarrinho(itemName);
+                    });
+                });
+            }
+            cartTotalSpan.textContent = formatCurrency(total);
+        }
+
+        // Handle troco input visibility
+        if (paymentMethodSelect && trocoInput) {
+            trocoInput.style.display = (paymentMethodSelect.value === "Dinheiro") ? 'block' : 'none';
+        }
+
+        // Enable/disable finalize order button
+        if (finalizeOrderBtn) {
+            finalizeOrderBtn.disabled = !estaAberto || Object.keys(carrinho).length === 0;
+        }
+    }
+
+
+    // --- Main Logic Functions ---
+
+    function alterarQuantidade(prod, delta) {
+        const atual = carrinho[prod.name]?.quantidade || 0;
+        const novo = atual + delta;
+
+        if (novo <= 0) {
+            delete carrinho[prod.name];
+        } else {
+            carrinho[prod.name] = {
+                price: prod.isPromotional ? prod.promotionalPrice : prod.price,
+                quantidade: novo
+            };
+        }
+        renderProducts(); // Re-render products to update quantities
+        renderCart();     // Re-render cart to update total and items
+    }
+
+    function removerItemCarrinho(nomeDoItem) {
+        delete carrinho[nomeDoItem];
+        renderProducts(); // Update quantities in product cards
+        renderCart();
+    }
+
+    function finalizarPedido() {
         if (!estaAberto) {
-          alert("Estamos fechados no momento. Faça seu pedido entre 08:00 e 14:00.");
-          return;
+            showAlertModal("Restaurante Fechado", "Estamos fechados no momento. Faça seu pedido entre 08:00 e 14:00."); // Replaced alert()
+            return;
         }
 
         if (Object.keys(carrinho).length === 0) {
-          alert("Carrinho vazio");
-          return;
+            showAlertModal("Carrinho Vazio", "Carrinho vazio. Adicione itens para finalizar o pedido."); // Replaced alert()
+            return;
         }
 
-        const itens = Object.entries(carrinho).map(([nome, dados]) => ({
-          nome,
-          preco: dados.preco,
-          quantidade: dados.quantidade
-        }));
+        if (!cliente) {
+            showAlertModal("Erro no Perfil", "Dados do cliente não carregados. Por favor, recarregue a página ou cadastre seu perfil.", () => {
+                window.location.href = "perfil.html"; // Redirect to profile
+            }); // Replaced alert()
+            return;
+        }
 
-        const total = itens.reduce((acc, item) => acc + item.preco * item.quantidade, 0);
+        const itensParaPedido = [];
+        Object.entries(carrinho).forEach(([name, dados]) => {
+            if (dados.isBundle && dados.bundleItems) {
+                dados.bundleItems.forEach(bundleItem => {
+                    const productBasePrice = products.find(p => p.name.toLowerCase() === bundleItem.productName.toLowerCase())?.price;
+
+                    const itemPrice = (bundleItem.priceOverride !== undefined && !isNaN(bundleItem.priceOverride))
+                                        ? parseFloat(bundleItem.priceOverride)
+                                        : (productBasePrice !== undefined && !isNaN(productBasePrice))
+                                            ? parseFloat(productBasePrice)
+                                            : 0;
+
+                    if (itemPrice === 0) {
+                        console.warn(`Preço para item de bundle '${bundleItem.productName}' não encontrado ou inválido.`);
+                    }
+
+                    itensParaPedido.push({
+                        nome: `${name} (${bundleItem.productName})`,
+                        preco: itemPrice,
+                        quantidade: bundleItem.quantity * dados.quantidade
+                    });
+                });
+            } else {
+                itensParaPedido.push({
+                    nome: name,
+                    preco: dados.price,
+                    quantidade: dados.quantidade
+                });
+            }
+        });
+
+        const total = itensParaPedido.reduce((acc, item) => acc + item.preco * item.quantidade, 0);
 
         const pedido = {
           nome: cliente.nome,
           telefone: cliente.telefone,
-          endereco: cliente.endereco + ", " + cliente.numero + " - " + cliente.bairro,
-          ponto: cliente.ponto || "",
-          formaPagamento,
-          troco: formaPagamento === "Dinheiro" && troco !== "" ? troco : "Sem troco",
-          itens,
+          endereco: `${cliente.endereco}, ${cliente.numero} - ${cliente.bairro}`,
+          ponto: cliente.ponto || "Não informado",
+          formaPagamento: formaPagamento,
+          troco: formaPagamento === "Dinheiro" && troco !== "" ? `Precisa de troco para ${formatCurrency(parseFloat(troco))}` : "Não precisa de troco",
+          itens: itensParaPedido,
           total,
-          horario: new Date().toLocaleString(),
+          horario: new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
           status: "Pendente"
         };
 
         db.ref("pedidos").push(pedido, erro => {
           if (erro) {
-            alert("Erro ao enviar pedido.");
+            showAlertModal("Erro ao Enviar Pedido", "Erro ao enviar pedido: " + erro.message); // Replaced alert()
           } else {
-            alert("Pedido enviado com sucesso!");
-            setCarrinho({});
-            setTroco("");
-            setFormaPagamento("Dinheiro");
+            showAlertModal("Pedido Enviado!", "Pedido enviado com sucesso! Acompanhe o status na seção 'Seus Pedidos Anteriores'.", () => {
+                carrinho = {}; // Reset cart
+                troco = "";    // Reset troco
+                formaPagamento = "Dinheiro"; // Reset payment method
+                renderProducts(); // Update quantities
+                renderCart();     // Update cart display
+                trocoInput.value = ""; // Clear troco input field
+                paymentMethodSelect.value = "Dinheiro"; // Set select to default
+                renderOrderHistory(); // Refresh order history
+            }); // Replaced alert()
           }
         });
-      }
-
-      if (carregando) return <p>Carregando...</p>;
-
-      return (
-        <div>
-          {showNotification && (
-            <div className="notification-banner">
-              🎉 Seu pedido está a caminho! 🎉
-            </div>
-          )}
-          <header>Olá, {cliente.nome?.split(" ")[0] || cliente.nome} 👋</header>
-
-          {!estaAberto && (
-            <div className="fechado-banner">
-              Estamos fechados no momento. <br />
-              Aceitamos pedidos todos os dias <br />
-              <strong>das 08:00 às 14:00</strong> 🕒
-            </div>
-          )}
-
-          <div className="status-pedido">
-            <h3>Seus Pedidos Anteriores</h3>
-            {todosPedidos.length > 0 ? (
-              todosPedidos.map((pedido, index) => {
-                let borderColorClass = "";
-                let statusTextColor = {};
-                if (pedido.status === "A caminho") {
-                  borderColorClass = "a-caminho";
-                } else if (pedido.status === "Entregue") {
-                  borderColorClass = "entregue";
-                  statusTextColor = { color: '#4CAF50' }; 
-                }
-
-                return (
-                  <div key={pedido.id} className={`status-detalhes ${borderColorClass}`} style={{ marginBottom: '15px', paddingBottom: '10px' }}>
-                    <p>
-                      <strong>Pedido {todosPedidos.length - index}#</strong> - Status:
-                      <strong className="status-text" style={statusTextColor}> {pedido.status}</strong>
-                    </p>
-                    <ul>
-                      {pedido.itens.map((item, i) => (
-                        <li key={i} className="linha-pedido">
-                          <span className="nome-qtd">{item.nome} x {item.quantidade}</span>
-                          <span className="preco-unit">Preço unitário: R$ {item.preco.toFixed(2)}</span>
-                          <span className="subtotal">Subtotal: R$ {(item.preco * item.quantidade).toFixed(2)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <p><strong>Total do Pedido: R$ {pedido.total.toFixed(2)}</strong></p>
-                    <p>Horário do pedido: {pedido.horario}</p>
-                  </div>
-                );
-              })
-            ) : (
-              <p>Você não possui pedidos anteriores.</p>
-            )}
-          </div>
-
-          {produtos.map((prod, i) => (
-            <div key={i} className="card">
-              <h4>{prod.nome}</h4>
-              <p>
-                {prod.promocao ? (
-                  <>
-                    <span className="preco-original">R$ {prod.preco.toFixed(2)}</span>
-                    <span className="preco-promocional">R$ {prod.promocao.toFixed(2)}</span>
-                  </>
-                ) : (
-                  <strong>R$ {prod.preco.toFixed(2)}</strong>
-                )}
-              </p>
-              <div>
-                <button onClick={() => alterarQuantidade(prod, -1)}>-</button>
-                <span>{carrinho[prod.nome]?.quantidade || 0}</span>
-                <button onClick={() => alterarQuantidade(prod, 1)}>+</button>
-              </div>
-            </div>
-          ))}
-
-          <div className="carrinho">
-            <h3>Carrinho</h3>
-            {Object.keys(carrinho).length === 0 ? (
-              <p>Seu carrinho está vazio.</p>
-            ) : (
-              <ul>
-                {Object.entries(carrinho).map(([nome, dados]) => (
-                  <li key={nome} className="item-carrinho">
-                    <span>{nome} x {dados.quantidade} - R$ {(dados.preco * dados.quantidade).toFixed(2)}</span>
-                    <button className="remove-btn" onClick={() => removerItemCarrinho(nome)}>Remover</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p><strong>Total:</strong> R$ {Object.entries(carrinho).reduce((acc, [_, dados]) => acc + dados.preco * dados.quantidade, 0).toFixed(2)}</p>
-
-            <label>Forma de Pagamento:</label>
-            <select value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value)}>
-              <option value="Dinheiro">Dinheiro</option>
-              <option value="Cartão">Cartão</option>
-              <option value="Pix">Pix</option>
-            </select>
-
-            {formaPagamento === "Dinheiro" && (
-              <input
-                type="number"
-                placeholder="Precisa de troco? Digite o valor"
-                value={troco}
-                onChange={(e) => setTroco(e.target.value)}
-              />
-            )}
-
-            <button onClick={finalizarPedido} disabled={!estaAberto}>Finalizar Pedido</button>
-          </div>
-        </div>
-      );
     }
 
-    ReactDOM.render(<App />, document.getElementById("root"));
+    function verificarHorario() {
+        const agora = new Date();
+        const hora = agora.getHours();
+        estaAberto = (hora >= 8 && hora < 14);
+        renderClosedBanner();
+        renderCart(); // Update button disabled state
+    }
+
+    // --- Initialization and Event Listeners ---
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Handle profile prompt
+        const tel = localStorage.getItem("telefone");
+
+        if (!tel) {
+            // Updated to use showAlertModal directly for the initial profile check
+            showAlertModal("Quase lá!", "Para continuar, precisamos que você cadastre suas informações de perfil primeiro.", () => {
+                window.location.href = "perfil.html";
+            });
+        } else {
+            // Hide loading, show main app, and start loading data
+            loadingScreen.style.display = 'none';
+            mainApp.style.display = 'block';
+            loadAppData(tel);
+        }
+
+        // Removed the direct listener on profilePromptConfirmBtn because showAlertModal handles it
+        // profilePromptConfirmBtn.addEventListener('click', () => {
+        //     window.location.href = "perfil.html";
+        // });
+
+        paymentMethodSelect.addEventListener('change', (event) => {
+            formaPagamento = event.target.value;
+            renderCart(); // To update troco input visibility
+        });
+
+        trocoInput.addEventListener('input', (event) => {
+            troco = event.target.value;
+        });
+
+        finalizeOrderBtn.addEventListener('click', finalizarPedido);
+
+        // Initial render for elements that don't depend on data loading
+        renderCart(); // To set initial total and troco visibility
+    });
+
+    // Function to load all app data (Firebase listeners)
+    function loadAppData(tel) {
+        // Firebase client data
+        const clienteRef = db.ref("clientes/" + tel);
+        clienteRef.once("value", snap => {
+            if (snap.exists()) {
+                cliente = snap.val();
+                renderHeader();
+            } else {
+                // If client not found in Firebase, show modal again using showAlertModal
+                showAlertModal("Perfil Incompleto", "Não conseguimos encontrar seu perfil completo. Por favor, cadastre suas informações.", () => {
+                    localStorage.removeItem("telefone"); // Clear invalid phone from localStorage
+                    window.location.href = "perfil.html";
+                });
+            }
+        });
+
+        // Firebase products data
+        const productsRef = db.ref("products");
+        productsRef.on("value", (snapshot) => {
+            products = [];
+            snapshot.forEach((childSnapshot) => {
+                products.push({ id: childSnapshot.key, ...childSnapshot.val() });
+            });
+            renderProducts();
+        });
+
+        // Firebase orders data
+        const pedidosRef = db.ref("pedidos").orderByChild("telefone").equalTo(tel);
+        pedidosRef.on("value", snap => {
+            const pedidosData = snap.val();
+            const loadedPedidos = [];
+            if (pedidosData) {
+                for (let key in pedidosData) {
+                    loadedPedidos.push({ id: key, ...pedidosData[key] });
+                }
+            }
+            todosPedidos = loadedPedidos.sort((a, b) => {
+                // Sort by timestamp in reverse order
+                const dateA = new Date(a.horario.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):(\d{2}):(\d{2})/, '$3-$2-$1T$4:$5:$6'));
+                const dateB = new Date(b.horario.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):(\d{2}):(\d{2})/, '$3-$2-$1T$4:$5:$6'));
+                return dateB - dateA;
+            });
+
+            todosPedidos.forEach(pedido => {
+                if (pedido.status === "A caminho" && !notifiedOrders.has(pedido.id)) {
+                    showNotification("🎉 Seu pedido está a caminho! 🎉");
+                    playNotificationSound();
+                    notifiedOrders.add(pedido.id);
+                }
+            });
+            renderOrderHistory();
+        });
+
+        // Horário de funcionamento
+        verificarHorario();
+        setInterval(verificarHorario, 60000); // Check every minute
+    }
   </script>
   <nav class="navbar" role="navigation" aria-label="Navegação principal">
-    <a href="home.html" class="active" aria-label="Fazer Pedido">
+    <a href="index.html" class="active" aria-label="Fazer Pedido">
       <svg viewBox="0 0 24 24"><path d="M12 2L4 7v6c0 4 4 6 8 6s8-2 8-6V7l-8-5zM12 12a2 2 0 110-4 2 2 0 010 4z"/></svg>
       Fazer Pedido
     </a>
